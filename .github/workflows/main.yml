@@ -1,0 +1,17 @@
+name: Main
+
+on:
+  push:
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./
+        id: action-setup
+        with:
+          version: "8.0.408"
+      - run: |
+          pwd
+          ls -la $HOME

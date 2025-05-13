@@ -1,0 +1,9 @@
+name: Setup dotnet
+description: Set dotnet
+inputs:
+  version:
+    description: Version
+    required: true
+runs:
+  using: node20
+  main: index.js
