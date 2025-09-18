@@ -10,17 +10,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - name: Generate artifact randomly
+        id: gen_artifact
+        run: |
+          minute=$(date +%M)
+          if [ $((10#$minute % 2)) -eq 0 ]; then
+            date > updated.log
+            echo "Artifact generated"
+            echo "generated=true" >> $GITHUB_OUTPUT
+          else
+            echo "No artifact generated"
+            echo "generated=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Upload artifact if generated
+        if: steps.gen_artifact.outputs.generated == 'true'
+        uses: actions/upload-artifact@v4
         with:
-          dotnet-version: "8.0.408"
-      # - uses: ./.github/actions/action-setup
-      #   id: action-setup
-      #   with:
-      #     version: "8.0.408"
-      - run: |
-          pwd
-          ls -la $HOME
-          echo $PATH
-          dotnet --version || echo 'dotnet not found'
-          dotnet tool install -g microsoft.sqlpackage
-          sqlpackage /Version
+          name: updated-log
+          path: updated.log
+      - name: List artifacts of current run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.runId,
+                per_page: 100,
+              },
+            );
+            const artifactNames = artifacts.map(a => a.name).join(", ");
+            core.notice(`Found ${artifacts.length} artifacts: ${artifactNames}.`);
